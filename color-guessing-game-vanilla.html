@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Guessing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        .color-display {
+            margin-bottom: 1.5rem;
+        }
+        
+        .color-display p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .rgb-value {
+            font-size: 1.5rem;
+            font-family: monospace;
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        
+        .color-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .color-box {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .color-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .message {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            height: 1.5rem;
+        }
+        
+        .correct {
+            color: #2ecc71;
+        }
+        
+        .wrong {
+            color: #e74c3c;
+        }
+        
+        .score {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .difficulty {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        
+        .difficulty button {
+            background-color: #ccc;
+            color: #333;
+        }
+        
+        .difficulty button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .new-colors {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+        
+        .new-colors:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Color Guessing Game</h1>
+        
+        <div class="color-display">
+            <p>Guess this color:</p>
+            <div class="rgb-value" id="rgb-display">RGB(255, 255, 255)</div>
+        </div>
+        
+        <div class="color-grid" id="color-grid">
+            <!-- Color boxes will be added here dynamically -->
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="score" id="score">Score: 0/0</div>
+        
+        <div class="difficulty">
+            <button id="easy" class="difficulty-btn">Easy</button>
+            <button id="medium" class="difficulty-btn active">Medium</button>
+            <button id="hard" class="difficulty-btn">Hard</button>
+        </div>
+        
+        <button class="new-colors" id="new-colors">New Colors</button>
+    </div>
+
+    <script>
+        // Game variables
+        let colors = [];
+        let correctColor = '';
+        let score = 0;
+        let gameCount = 0;
+        let difficulty = 'medium';
+        let colorCount = 6;
+        
+        // Get elements
+        const rgbDisplay = document.getElementById('rgb-display');
+        const colorGrid = document.getElementById('color-grid');
+        const messageDisplay = document.getElementById('message');
+        const scoreDisplay = document.getElementById('score');
+        const newColorsButton = document.getElementById('new-colors');
+        const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+        
+        // Generate a random RGB color
+        function generateRandomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        
+        // Start a new game
+        function startNewGame() {
+            // Determine color count based on difficulty
+            if (difficulty === 'easy') colorCount = 3;
+            else if (difficulty === 'medium') colorCount = 6;
+            else if (difficulty === 'hard') colorCount = 9;
+            
+            // Generate colors
+            colors = [];
+            for (let i = 0; i < colorCount; i++) {
+                colors.push(generateRandomColor());
+            }
+            
+            // Pick a random color as correct answer
+            correctColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Update RGB display
+            rgbDisplay.textContent = correctColor;
+            
+            // Clear message
+            messageDisplay.textContent = '';
+            messageDisplay.className = 'message';
+            
+            // Update color grid
+            updateColorGrid();
+            
+            // Increment game count
+            gameCount++;
+            
+            // Update score display
+            scoreDisplay.textContent = `Score: ${score}/${gameCount}`;
+        }
+        
+        // Update the color grid
+        function updateColorGrid() {
+            // Clear existing color boxes
+            colorGrid.innerHTML = '';
+            
+            // Create new color boxes
+            colors.forEach(color => {
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = color;
+                
+                // Add click event listener
+                colorBox.addEventListener('click', function() {
+                    handleColorClick(color);
+                });
+                
+                colorGrid.appendChild(colorBox);
+            });
+        }
+        
+        // Handle color selection
+        function handleColorClick(selectedColor) {
+            if (selectedColor === correctColor) {
+                messageDisplay.textContent = 'Correct! Well done!';
+                messageDisplay.className = 'message correct';
+                score++;
+                
+                // Disable all color boxes
+                const colorBoxes = document.querySelectorAll('.color-box');
+                colorBoxes.forEach(box => {
+                    box.style.pointerEvents = 'none';
+                });
+                
+                // Start new game after delay
+                setTimeout(startNewGame, 1500);
+            } else {
+                messageDisplay.textContent = 'Wrong! Try again.';
+                messageDisplay.className = 'message wrong';
+            }
+            
+            // Update score display
+            scoreDisplay.textContent = `Score: ${score}/${gameCount}`;
+        }
+        
+        // Change difficulty level
+        function changeDifficulty(level) {
+            difficulty = level;
+            score = 0;
+            gameCount = 0;
+            
+            // Update active button
+            difficultyButtons.forEach(button => {
+                if (button.id === level) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+            
+            startNewGame();
+        }
+        
+        // Add event listeners
+        newColorsButton.addEventListener('click', function() {
+            startNewGame();
+        });
+        
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                changeDifficulty(button.id);
+            });
+        });
+        
+        // Initialize game
+        startNewGame();
+    </script>
+</body>
+</html>
